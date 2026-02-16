@@ -55,7 +55,7 @@ public class QuizGUI extends JFrame {
 
     private void loadQuestions() {
         questions = new ArrayList<>();
-        String sql = "SELECT * FROM questions WHERE difficulty = ? LIMIT 5";
+        String sql = "SELECT * FROM questions WHERE difficulty = ? ORDER BY RAND() LIMIT 10";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {

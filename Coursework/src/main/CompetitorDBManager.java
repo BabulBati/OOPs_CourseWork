@@ -53,6 +53,47 @@ public class CompetitorDBManager {
         }
         return -1;
     }
+    
+    /**
+     * 
+     * @param competitorID
+     * @param level
+     * @return
+     */
+    
+    public static int getAttemptCount(int competitorID, String level) {
+
+        String sql = "SELECT score1, score2, score3, score4, score5 " +
+                     "FROM score WHERE competitorID = ? AND level = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, competitorID);
+            pstmt.setString(2, level);
+
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                int count = 0;
+
+                for (int i = 1; i <= 5; i++) {
+                    int score = rs.getInt("score" + i);
+                    if (!rs.wasNull()) {
+                        count++;
+                    }
+                }
+
+                return count;
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+
 
     /**
      * Adds a quiz score for a competitor.

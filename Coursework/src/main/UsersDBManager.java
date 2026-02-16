@@ -6,53 +6,90 @@ import java.sql.*;
  * Manages user authentication and registration.
  */
 public class UsersDBManager {
-	
-	/**
+
+    /**
      * Registers a new player account.
      */
-    public static boolean registerPlayer(String username, String password) {
-        String checkSql = "SELECT userID FROM Users WHERE username = ?";
+	public static int registerPlayer(String username, String password) {
+
+	    String checkSql = "SELECT userID FROM Users WHERE username = ?";
+
+	    try (Connection conn = DBConnection.getConnection();
+	         PreparedStatement checkStmt = conn.prepareStatement(checkSql)) {
+
+	        checkStmt.setString(1, username);
+	        ResultSet rs = checkStmt.executeQuery();
+
+	        if (rs.next()) {
+	            return -1; // Username already exists
+	        }
+
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	        return -1;
+	    }
+
+	    String insertSql = "INSERT INTO Users (username, password, role) VALUES (?, ?, 'player')";
+
+	    try (Connection conn = DBConnection.getConnection();
+	         PreparedStatement pstmt = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
+
+	        pstmt.setString(1, username);
+	        pstmt.setString(2, password);
+	        pstmt.executeUpdate();
+
+	        ResultSet generatedKeys = pstmt.getGeneratedKeys();
+
+	        if (generatedKeys.next()) {
+	            return generatedKeys.getInt(1); // return new userID
+	        }
+
+	    } catch (SQLException e) {
+	        System.out.println("Error: " + e.getMessage());
+	    }
+
+	    return -1;
+	}
+
+
+    /**
+     * Authenticates user.
+     * Returns userID if successful, otherwise -1.
+     */
+    public static int login(String username, String password) {
+
+        String sql = "SELECT userID FROM Users WHERE username = ? AND password = ?";
 
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement checkStmt = conn.prepareStatement(checkSql)) {
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            checkStmt.setString(1, username);
-            ResultSet rs = checkStmt.executeQuery();
+            pstmt.setString(1, username);
+            pstmt.setString(2, password);
+
+            ResultSet rs = pstmt.executeQuery();
+
             if (rs.next()) {
-                return false;
+                return rs.getInt("userID"); // Login success
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-
-        String sql = "INSERT INTO Users (username, password, role) VALUES (?, ?, 'player')";
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setString(1, username);
-            pstmt.setString(2, password);
-            pstmt.executeUpdate();
-            return true;
-
-        } catch (SQLException e) {
             System.out.println("Error: " + e.getMessage());
-            return false;
         }
+
+        return -1; // Login failed
     }
 
     /**
-     * Authenticates a user and returns role.
+     * Gets role using userID.
      */
-    public static String login(String username, String password) {
-        String sql = "SELECT role, userID FROM Users WHERE username = ? AND password = ?";
+    public static String getRole(int userID) {
+
+        String sql = "SELECT role FROM Users WHERE userID = ?";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            pstmt.setString(1, username);
-            pstmt.setString(2, password);
+            pstmt.setInt(1, userID);
             ResultSet rs = pstmt.executeQuery();
 
             if (rs.next()) {
@@ -62,25 +99,7 @@ public class UsersDBManager {
         } catch (SQLException e) {
             System.out.println("Error: " + e.getMessage());
         }
+
         return null;
-    }
-
-    /**
-     * Retrieves user ID using username.
-     */
-    public static int getUserID(String username) {
-        String sql = "SELECT userID FROM Users WHERE username = ?";
-
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setString(1, username);
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) return rs.getInt("userID");
-
-        } catch (SQLException e) {
-            System.out.println("Error: " + e.getMessage());
-        }
-        return -1;
     }
 }

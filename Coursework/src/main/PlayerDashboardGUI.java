@@ -55,7 +55,20 @@ public class PlayerDashboardGUI extends JFrame {
                     options[0]);
 
             if (difficulty != null) {
-            	new QuizGUI(userID, competitorID, difficulty).setVisible(true);
+            	int attempts = CompetitorDBManager.getAttemptCount(competitorID, difficulty);
+
+            	if (attempts >= 5) {
+
+            	    JOptionPane.showMessageDialog(this,
+            	        "You already used 5 attempts for " + difficulty + " level.",
+            	        "Attempt Limit Reached",
+            	        JOptionPane.WARNING_MESSAGE);
+
+            	} else {
+
+            	    new QuizGUI(userID,competitorID, difficulty).setVisible(true);
+            	}
+
             }
         });
         contentPane.add(btnStartQuiz);

@@ -168,66 +168,84 @@ public class LoginRegisterGUI extends JFrame {
     }
 
     private void performLogin() {
+
         String username = txtUsernameLogin.getText();
         String password = new String(txtPasswordLogin.getPassword());
-        String role = UsersDBManager.login(username, password);
 
-        if (role == null) {
+        int userID = UsersDBManager.login(username, password);
+
+        if (userID == -1) {
             lblLoginMessage.setText("Invalid credentials!");
-        } else if (role.equals("admin")) {
+            return;
+        }
+
+        String role = UsersDBManager.getRole(userID);
+
+        if (role.equals("admin")) {
             new AdminDashboardGUI().setVisible(true);
             dispose();
         } else {
-            int userID = UsersDBManager.getUserID(username);
             int competitorID = CompetitorDBManager.getCompetitorID(userID);
+
+            System.out.println("UserID = " + userID);
+            System.out.println("CompetitorID = " + competitorID);
+
             new PlayerDashboardGUI(userID, competitorID).setVisible(true);
             dispose();
         }
     }
 
+
     private void performRegister() {
-        String username = txtUsernameReg.getText().trim();
-        String password = new String(txtPasswordReg.getPassword()).trim();
-        String firstName = txtFirstName.getText().trim();
-        String lastName = txtLastName.getText().trim();
-        String ageText = txtAge.getText().trim();
-        
 
-        if (username.isEmpty() || password.isEmpty() || firstName.isEmpty() || lastName.isEmpty() || ageText.isEmpty()) {
-            lblRegMessage.setText("Please fill in all fields!");
-            return;
-        }
-        
-        int age;
-        
-        try {
-            age = Integer.parseInt(ageText);
-            if (age <= 0) {
-                lblRegMessage.setText("Age must be a positive number!");
-                return;
-            }
-        } catch (NumberFormatException e) {
-            lblRegMessage.setText("Age must be a number!");
-            return;
-        }
+    String username = txtUsernameReg.getText().trim();
+    String password = new String(txtPasswordReg.getPassword()).trim();
+    String firstName = txtFirstName.getText().trim();
+    String lastName = txtLastName.getText().trim();
+    String ageText = txtAge.getText().trim();
 
-        boolean success = UsersDBManager.registerPlayer(username, password);
+    if (username.isEmpty() || password.isEmpty() || firstName.isEmpty()
+            || lastName.isEmpty() || ageText.isEmpty()) {
 
-        if (success) {
-            int userID = UsersDBManager.getUserID(username);
-            CompetitorDBManager.addCompetitor(userID, firstName, lastName, age);
-
-            txtUsernameReg.setText("");
-            txtPasswordReg.setText("");
-            txtFirstName.setText("");
-            txtLastName.setText("");
-            txtAge.setText("");
-
-            lblRegMessage.setForeground(Color.GREEN);
-            lblRegMessage.setText("Registration successful! You can login now.");
-        } else {
-            lblRegMessage.setForeground(Color.RED);
-            lblRegMessage.setText("Username already exists!");
-        }
+        lblRegMessage.setForeground(Color.RED);
+        lblRegMessage.setText("Please fill in all fields!");
+        return;
     }
+
+    int age;
+
+    try {
+        age = Integer.parseInt(ageText);
+        if (age <= 0) {
+            lblRegMessage.setForeground(Color.RED);
+            lblRegMessage.setText("Age must be positive!");
+            return;
+        }
+    } catch (NumberFormatException e) {
+        lblRegMessage.setForeground(Color.RED);
+        lblRegMessage.setText("Age must be a number!");
+        return;
+    }
+
+    int userID = UsersDBManager.registerPlayer(username, password);
+
+    if (userID == -1) {
+        lblRegMessage.setForeground(Color.RED);
+        lblRegMessage.setText("Username already exists!");
+        return;
+    }
+
+    // Create competitor immediately using returned userID
+    CompetitorDBManager.addCompetitor(userID, firstName, lastName, age);
+
+    txtUsernameReg.setText("");
+    txtPasswordReg.setText("");
+    txtFirstName.setText("");
+    txtLastName.setText("");
+    txtAge.setText("");
+
+    lblRegMessage.setForeground(Color.GREEN);
+    lblRegMessage.setText("Registration successful! You can login now.");
+}
+
 }
