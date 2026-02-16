@@ -33,8 +33,8 @@ public class QuestionsViewGUI extends JFrame {
         String sql = "SELECT * FROM Questions";
 
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
                 model.addRow(new Object[]{
